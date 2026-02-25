@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arrw Reports — Gamified Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #1A365D;
+      --accent: #F6A623;
+      --accent-light: #FBD38D;
+      --dark: #0F1B2D;
+      --surface: #1E2A3A;
+      --surface-light: #2D3B4D;
+      --success: #38A169;
+      --danger: #E53E3E;
+      --warning: #D69E2E;
+      --info: #3182CE;
+      --text: #E2E8F0;
+      --text-muted: #A0AEC0;
+      --text-dim: #718096;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface-light) var(--dark);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ─── XP Progress Bar (Fixed Top) ───── */
+    .xp-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--surface);
+      z-index: 100;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* ─── Navigation ───── */
+    .nav {
+      position: fixed;
+      top: 4px;
+      left: 0;
+      right: 0;
+      background: rgba(15, 27, 45, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--surface-light);
+      z-index: 90;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: var(--dark);
+      font-size: 16px;
+    }
+    .nav-title {
+      font-weight: 600;
+      color: white;
+      font-size: 14px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-link {
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--accent);
+      background: rgba(246, 166, 35, 0.1);
+    }
+    .nav-xp {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--dark);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ─── Hero Section ───── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(246,166,35,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(246,166,35,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridShift 20s linear infinite;
+    }
+    @keyframes gridShift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(40px, 40px); }
+    }
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      background: var(--accent);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: var(--dark);
+      margin-bottom: 24px;
+      box-shadow: 0 0 40px rgba(246, 166, 35, 0.3);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+    .hero .sub-subtitle {
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      margin-bottom: 32px;
+    }
+    .hero .sub-subtitle span { color: var(--accent); }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-primary {
+      padding: 12px 28px;
+      background: var(--accent);
+      color: var(--dark);
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: scale(1.05);
+    }
+    .btn-secondary {
+      padding: 12px 28px;
+      background: var(--surface);
+      color: white;
+      font-weight: 700;
+      border: 1px solid var(--surface-light);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      transform: scale(1.05);
+    }
+
+    /* ─── Scroll Reveal Animation ───── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Report Sections ───── */
+    .report-section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .section-number {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(246, 166, 35, 0.1);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(246, 166, 35, 0.2);
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .section-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-complete {
+      background: rgba(56, 161, 105, 0.15);
+      color: var(--success);
+    }
+    .badge-active {
+      background: rgba(246, 166, 35, 0.15);
+      color: var(--accent);
+    }
+
+    .report-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .report-card:hover {
+      border-color: var(--accent);
+    }
+    .report-card h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: white;
+    }
+    .report-card p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* ─── Metric Cards ───── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .metric-card {
+      background: var(--dark);
+      border: 1px solid var(--surface-light);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* ─── Zone Progress ───── */
+    .zone-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .zone-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--dark);
+      border-radius: 12px;
+      border: 1px solid var(--surface-light);
+    }
+    .zone-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .zone-name {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .zone-name-ar {
+      font-family: 'Cairo', sans-serif;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .zone-status {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    /* ─── Achievement Badges ───── */
+    .achievements {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .achievement {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--surface);
+      border: 1px solid var(--surface-light);
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .achievement.unlocked {
+      border-color: var(--accent);
+      background: rgba(246, 166, 35, 0.05);
+    }
+
+    /* ─── Tech Stack ───── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--dark);
+      border-radius: 10px;
+      border: 1px solid var(--surface-light);
+    }
+    .tech-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .tech-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .tech-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* ─── CTA Section ───── */
+    .cta {
+      text-align: center;
+      padding: 80px 24px;
+      background: linear-gradient(to bottom, var(--dark), var(--navy));
+    }
+    .cta h2 {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+    .cta p {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ─── Footer ───── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-dim);
+      font-size: 12px;
+      border-top: 1px solid var(--surface-light);
+    }
+
+    /* ─── Responsive ───── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero h1 { font-size: 1.8rem; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- XP Progress Bar -->
+  <div class="xp-bar">
+    <div class="xp-bar-fill" id="xpBar"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="#" class="nav-brand">
+      <div class="nav-logo">A</div>
+      <span class="nav-title">Arrw Reports</span>
+    </a>
+    <div class="nav-links">
+      <a href="#mission" class="nav-link">Mission Control</a>
+      <a href="#economics" class="nav-link">Economics</a>
+      <a href="#expansion" class="nav-link">Expansion</a>
+      <a href="#driver" class="nav-link">Driver Mode</a>
+      <a href="#tech" class="nav-link">Tech Stack</a>
+    </div>
+    <div class="nav-xp">⭐ <span id="xpCount">0</span> XP</div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-logo">A</div>
+    <h1>Arrw <span>Portfolio</span></h1>
+    <p class="subtitle">Interactive Mobility Simulator & Reports</p>
+    <p class="sub-subtitle">by <span>Mohamed Negm</span> — for Adel Mamdouh, Growth & Commercial Director</p>
+    <div class="hero-actions">
+      <a href="#mission" class="btn-primary">📖 Read Reports</a>
+      <a href="../arrw-portfolio/index.html" class="btn-secondary">🎮 Launch Simulator</a>
+    </div>
+  </section>
+
+  <!-- Report 01: Mission Control -->
+  <section class="report-section" id="mission">
+    <div class="reveal">
+      <div class="section-header">
+        <span class="section-number">01</span>
+        <h2 class="section-title">Mission Control</h2>
+        <span class="section-badge badge-complete">✓ Complete</span>
+      </div>
+
+      <div class="report-card">
+        <h3>🗺️ Fleet Operations Dashboard</h3>
+        <p>Real-time, top-down view of Arrw's fleet across 6 Egyptian zones. Track drivers, rides, utilization, and zone economics from Mission Control.</p>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Active Drivers</div>
+            <div class="metric-value" style="color: var(--success)">77</div>
+            <div class="metric-sub">Across 2 zones</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Avg Utilization</div>
+            <div class="metric-value" style="color: var(--accent)">67.3%</div>
+            <div class="metric-sub">Target: >70%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Zones Active</div>
+            <div class="metric-value" style="color: var(--info)">2 / 6</div>
+            <div class="metric-sub">Alex + 6 October</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Sim Speed</div>
+            <div class="metric-value" style="color: var(--text-muted)">1x – 5x</div>
+            <div class="metric-sub">Adjustable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Report 02: Economics -->
+  <section class="report-section" id="economics">
+    <div class="reveal">
+      <div class="section-header">
+        <span class="section-number">02</span>
+        <h2 class="section-title">Unit Economics</h2>
+        <span class="section-badge badge-complete">✓ Complete</span>
+      </div>
+
+      <div class="report-card">
+        <h3>💰 Core Formulas</h3>
+        <p>Every number in the simulator is driven by real mobility economics. Adjust any parameter and see cascading effects.</p>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">LTV</div>
+            <div class="metric-value" style="color: var(--success)">480 EGP</div>
+            <div class="metric-sub">Default estimate</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">CAC</div>
+            <div class="metric-value" style="color: var(--danger)">150 EGP</div>
+            <div class="metric-sub">Acquisition cost</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">LTV:CAC</div>
+            <div class="metric-value" style="color: var(--success)">3.2x</div>
+            <div class="metric-sub">Healthy ✓</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Worst Zone Dead Miles</div>
+            <div class="metric-value" style="color: var(--danger)">4.2 km</div>
+            <div class="metric-sub">6th October</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <h3>🔑 Key Insight</h3>
+        <p><strong>Dead miles are the silent margin killer.</strong> 6th October has the highest dead miles (4.2 km), making it barely profitable at ~0.2 EGP/trip. Hub-based driver positioning near malls and universities could cut dead miles by 40%, increasing net revenue per trip to ~2.2 EGP.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Report 03: Expansion -->
+  <section class="report-section" id="expansion">
+    <div class="reveal">
+      <div class="section-header">
+        <span class="section-number">03</span>
+        <h2 class="section-title">Egypt Expansion</h2>
+        <span class="section-badge badge-active">⚡ In Progress</span>
+      </div>
+
+      <div class="report-card">
+        <h3>🇪🇬 6-Zone Corridor Strategy</h3>
+        <p>From Alexandria to Downtown Cairo — each zone unlocks new challenges and economics.</p>
+
+        <div class="zone-list">
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #4299E1;"></div>
+            <div>
+              <div class="zone-name">Alexandria</div>
+              <div class="zone-name-ar">الإسكندرية</div>
+            </div>
+            <span class="zone-status" style="background: rgba(56,161,105,0.15); color: var(--success);">Active</span>
+          </div>
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #48BB78;"></div>
+            <div>
+              <div class="zone-name">6th October</div>
+              <div class="zone-name-ar">٦ أكتوبر</div>
+            </div>
+            <span class="zone-status" style="background: rgba(56,161,105,0.15); color: var(--success);">Active</span>
+          </div>
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #ECC94B;"></div>
+            <div>
+              <div class="zone-name">Ring Road</div>
+              <div class="zone-name-ar">الدائري</div>
+            </div>
+            <span class="zone-status" style="background: rgba(214,158,46,0.15); color: var(--warning);">Expansion</span>
+          </div>
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #9F7AEA;"></div>
+            <div>
+              <div class="zone-name">5th Settlement</div>
+              <div class="zone-name-ar">التجمع الخامس</div>
+            </div>
+            <span class="zone-status" style="background: rgba(214,158,46,0.15); color: var(--warning);">Expansion</span>
+          </div>
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #ED8936;"></div>
+            <div>
+              <div class="zone-name">New Cairo</div>
+              <div class="zone-name-ar">القاهرة الجديدة</div>
+            </div>
+            <span class="zone-status" style="background: rgba(214,158,46,0.15); color: var(--warning);">Expansion</span>
+          </div>
+          <div class="zone-item">
+            <div class="zone-dot" style="background: #F56565;"></div>
+            <div>
+              <div class="zone-name">Downtown Cairo</div>
+              <div class="zone-name-ar">وسط البلد</div>
+            </div>
+            <span class="zone-status" style="background: rgba(229,62,62,0.15); color: var(--danger);">🔒 Locked</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Report 04: Driver Mode -->
+  <section class="report-section" id="driver">
+    <div class="reveal">
+      <div class="section-header">
+        <span class="section-number">04</span>
+        <h2 class="section-title">Driver Mode</h2>
+        <span class="section-badge badge-complete">✓ Complete</span>
+      </div>
+
+      <div class="report-card">
+        <h3>🏎️ Crazy Taxi Experience</h3>
+        <p>Drive a Nissan Sunny through Egyptian streets. Accept rides, earn fares, and experience supply-side economics firsthand. WASD controls, ride queue management, and real-time earnings.</p>
+        
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label">Controls</div>
+            <div class="metric-value" style="color: var(--text); font-size: 0.9rem;">WASD / Arrows</div>
+            <div class="metric-sub">+ Mobile touch</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Ride Timer</div>
+            <div class="metric-value" style="color: var(--accent)">15s</div>
+            <div class="metric-sub">Accept or expire</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Fare Range</div>
+            <div class="metric-value" style="color: var(--success)">20-120 EGP</div>
+            <div class="metric-sub">Zone-dependent</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <h3>🧠 What Drivers Discover</h3>
+        <p>After a 10-minute session, most players realize: high-surge zones feel profitable but trips are short; dead miles are invisible costs; and selecting the right ride matters more than accepting every ride.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Report 05: Tech Stack -->
+  <section class="report-section" id="tech">
+    <div class="reveal">
+      <div class="section-header">
+        <span class="section-number">05</span>
+        <h2 class="section-title">Tech Architecture</h2>
+        <span class="section-badge badge-complete">✓ Complete</span>
+      </div>
+
+      <div class="report-card">
+        <h3>⚙️ Stack & Decisions</h3>
+        <p>Every technology choice was made with a tradeoff analysis. Zero external APIs, fully client-side, ~870KB total bundle.</p>
+
+        <div class="tech-grid">
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(97, 218, 251, 0.15);">⚛️</div>
+            <div>
+              <div class="tech-name">React 18 + Vite</div>
+              <div class="tech-desc">Fast HMR, native JSX</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(246, 166, 35, 0.15);">🎮</div>
+            <div>
+              <div class="tech-name">Phaser 3</div>
+              <div class="tech-desc">2D side-scroller engine</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(56, 161, 105, 0.15);">🧊</div>
+            <div>
+              <div class="tech-name">React-Three-Fiber</div>
+              <div class="tech-desc">3D fleet simulator</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(159, 122, 234, 0.15);">🐻</div>
+            <div>
+              <div class="tech-name">Zustand</div>
+              <div class="tech-desc">3KB state bridge</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(49, 130, 206, 0.15);">🔍</div>
+            <div>
+              <div class="tech-name">AlaSQL</div>
+              <div class="tech-desc">In-browser SQL engine</div>
+            </div>
+          </div>
+          <div class="tech-item">
+            <div class="tech-icon" style="background: rgba(237, 137, 54, 0.15);">✨</div>
+            <div>
+              <div class="tech-name">Framer Motion</div>
+              <div class="tech-desc">UI transitions</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Achievements -->
+      <div class="report-card">
+        <h3>🏆 Portfolio Achievements</h3>
+        <div class="achievements">
+          <div class="achievement unlocked">🌊 Alexandria Explorer</div>
+          <div class="achievement unlocked">🏗️ October Builder</div>
+          <div class="achievement unlocked">🛣️ Ring Road Runner</div>
+          <div class="achievement unlocked">🎓 Settlement Scholar</div>
+          <div class="achievement unlocked">🏙️ Cairo Navigator</div>
+          <div class="achievement">🔓 Downtown Unlocker</div>
+          <div class="achievement unlocked">💰 Economist</div>
+          <div class="achievement unlocked">🚕 Taxi Driver</div>
+          <div class="achievement unlocked">🔍 SQL Master</div>
+          <div class="achievement">🏆 100% Completion</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="reveal">
+      <h2>Ready to <span style="color: var(--accent);">experience</span> it?</h2>
+      <p>Launch the interactive simulator to explore fleet operations, drive through Egyptian streets, and test unit economics in real-time.</p>
+      <a href="../arrw-portfolio/index.html" class="btn-primary">🎮 Launch Simulator</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Built with ❤️ by Mohamed Negm | Arrw Portfolio 2024</p>
+    <p style="margin-top: 4px;">React • Phaser 3 • Three.js • Zustand • AlaSQL • TailwindCSS</p>
+  </footer>
+
+  <script>
+    // ─── Scroll-triggered XP bar & reveal animations ─────
+    let xp = 0
+    const maxXP = 500
+    const xpBar = document.getElementById('xpBar')
+    const xpCount = document.getElementById('xpCount')
+    const reveals = document.querySelectorAll('.reveal')
+    const grantedSections = new Set()
+
+    function updateXP(amount) {
+      xp = Math.min(xp + amount, maxXP)
+      xpBar.style.width = (xp / maxXP) * 100 + '%'
+      xpCount.textContent = xp
+    }
+
+    // Intersection Observer for reveals
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible')
+          
+          // Grant XP for section views
+          const section = entry.target.closest('section')
+          if (section && section.id && !grantedSections.has(section.id)) {
+            grantedSections.add(section.id)
+            updateXP(100)
+          }
+        }
+      })
+    }, { threshold: 0.15 })
+
+    reveals.forEach(el => observer.observe(el))
+
+    // Update XP bar on scroll
+    window.addEventListener('scroll', () => {
+      const scrollPct = window.scrollY / (document.body.scrollHeight - window.innerHeight)
+      xpBar.style.width = Math.max((xp / maxXP) * 100, scrollPct * 100) + '%'
+    })
+  </script>
+
+</body>
+</html>
